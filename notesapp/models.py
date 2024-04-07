@@ -13,24 +13,3 @@ class Note(models.Model):
 
     def __str__(self):
         return(f"{self.title}")
-    
-class MyUser(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    Note = models.ManyToManyField(Note)
-
-@receiver(post_save, sender=User)
-def create_user_profile(sender, instance, created, **kwargs):
-    if created:
-        MyUser.objects.create(user=instance)
-
-# @receiver(post_save, sender=User)
-# def save_user_profile(sender, instance, **kwargs):
-#     instance.myuser.save()
-
-
-
-
-    
-# class NoteAccess(models.Model):
-#     note = models.ManyToManyField(Note)
-#     myusers = models.ManyToManyField(User)

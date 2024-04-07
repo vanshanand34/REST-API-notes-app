@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.contrib.auth import login , logout , authenticate
 from django.contrib.auth.models import User
 from datetime import datetime
-from .models import Note , MyUser
+from .models import Note
 from .serializer import UserSerializer , NoteSerializer , NoteContentSerializer , RegisterSerializer
 from rest_framework.decorators import api_view , permission_classes
 from rest_framework.response import Response 
@@ -51,13 +51,12 @@ def logoutapi(request):
 
 @api_view(['POST'])
 def createnoteapi(request):
-    if(not request.user.is_authenticated()):    return Response({"Loggin required to create a note"},status=status.HTTP_400_BAD_REQUEST)
-    myuser = UserSerializer(data = request.user)
     mydata = request.data
     mydata = NoteSerializer(data = mydata)
+    print("mydata=",mydata)
     if(mydata.is_valid()):
         mydata.data['timestamp'] = datetime.now()
-        mydata.data['email'] = myuser.email  
+        mydata.data['email'] = request.user.email  
         mydata.save()
         return Response(mydata.data , status=status.HTTP_201_CREATED)
     else:

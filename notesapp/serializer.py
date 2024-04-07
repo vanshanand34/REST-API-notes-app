@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Note , MyUser
+from .models import Note
 from django.contrib.auth.models import User
 
 from rest_framework import serializers
@@ -37,13 +37,13 @@ class RegisterSerializer(serializers.ModelSerializer):
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
-        model = MyUser
+        model = User
         fields = ('__all__')
 
 class NoteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Note
-        fields = ('__all__')
+        fields = ('allowed_users','content','title')
 
 class NoteContentSerializer(serializers.ModelSerializer):
     class Meta:
