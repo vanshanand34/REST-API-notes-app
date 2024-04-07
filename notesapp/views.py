@@ -1,14 +1,17 @@
 from django.shortcuts import render
+from django.db.models import Q
 from django.contrib.auth import login , logout , authenticate
 from django.contrib.auth.models import User
 from datetime import datetime
 from .models import Note
 from .serializer import UserSerializer , NoteSerializer , NoteContentSerializer , RegisterSerializer
-from rest_framework.decorators import api_view , permission_classes
+from rest_framework.decorators import api_view , permission_classes 
+from functools import wraps
 from rest_framework.response import Response 
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.models import Token
+
 
 # Create your views here.
 @api_view(['POST'])
@@ -19,16 +22,18 @@ def loginapi(request):
     if user is not None:
         login(request,user)
         token , created = Token.objects.get_or_create(user=user)
-        myuser = MyUser(user=user)
-        myuser = UserSerializer(myuser)
-        mydata = Note.objects.all()
-        mynotes = []
-        print(mydata,myuser.data)
-        for i in mydata:
-            for myemail in i.allowed_users.strip().split(','):
-                if myemail == myuser.data['email']:
-                    mynotes.append(i)
-        mynotes = NoteContentSerializer(mydata , many=True)
+        # if(not myuser.is_valid()):  return Response(mydata.errors,status=status.HTTP_400_BAD_REQUEST
+        mynotes = Note.objects.filter(Q(allowed_users__contains=user.email) | Q(creator=user))
+        mynotes = NoteContentSerializer(mynotes,many=True)
+        # mydata = NoteContentSerializer(mydata)
+        # if(mynotes.is_valid() and mydata.is_valid()):
+        # else:   return Response(mynotes.data,status=status.HTTP_400_BAD_REQUEST)
+        # mynotes = []
+        # print(mydata,myuser.data)
+        # for i in mydata:
+        #     for myemail in i.allowed_users.strip().split(','):
+        #         if myemail == myuser.data['email']:
+        #             mynotes.append(i)
         return Response({'token':token.key ,'your notes':mynotes.data},status=status.HTTP_200_OK)
     else:
         return Response({'error':'invalid credentials'})
@@ -51,17 +56,15 @@ def logoutapi(request):
 
 @api_view(['POST'])
 def createnoteapi(request):
-    mydata = request.data
-    mydata = NoteSerializer(data = mydata)
-    print("mydata=",mydata)
-    if(mydata.is_valid()):
-        mydata.data['timestamp'] = datetime.now()
-        mydata.data['email'] = request.user.email  
-        mydata.save()
-        return Response(mydata.data , status=status.HTTP_201_CREATED)
-    else:
-        return Response(mydata.errors,status=status.HTTP_400_BAD_REQUEST)
-    pass
+    c
+    user = token.user
+    data = request.data.copy()
+    data.pop('token',None)
+    # print(data)
+    mydata = Note.objects.create(title=data['title'],creator=user,timestamp=datetime.now(),content=data['content'],allowed_users=data['allowed_users'])
+    mydata.save()
+    # print(mydata.allowed_users)
+    return Response(NoteSerializer(mydata).data , status=status.HTTP_201_CREATED)
 
 @api_view(['POST'])
 def deletenoteapi():
@@ -69,5 +72,6 @@ def deletenoteapi():
 
 @api_view(['POST'])
 def updatenoteapi():
+
     pass
 

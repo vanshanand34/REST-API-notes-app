@@ -38,12 +38,17 @@ class RegisterSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('__all__')
+        fields = ('id','email','username')
 
 class NoteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Note
-        fields = ('allowed_users','content','title')
+        fields = ('title','content','allowed_users')
+        # partial = True
+    # def create(self, validated_data):
+    #     # Assign current user automatically
+    #     validated_data['creator'] = self.context['request'].user  # Assuming authenticated request
+    #     return super().create(validated_data)
 
 class NoteContentSerializer(serializers.ModelSerializer):
     class Meta:
