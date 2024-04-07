@@ -2,6 +2,9 @@ from django.db import models
 from django.contrib.auth.models import User
 # Create your models here.
 
+
+
+
 class Note(models.Model):
     title = models.CharField(max_length = 50)
     creater = models.ForeignKey(User,on_delete=models.CASCADE)
@@ -11,3 +14,7 @@ class Note(models.Model):
 
     def __str__(self):
         return(f"{self.title}")
+    
+class NoteAccess(models.Model):
+    note = models.ManyToManyField(Note)
+    myusers = models.ManyToManyField(User)
