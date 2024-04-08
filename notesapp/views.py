@@ -22,21 +22,11 @@ def loginapi(request):
     if user is not None:
         login(request,user)
         token , created = Token.objects.get_or_create(user=user)
-        # if(not myuser.is_valid()):  return Response(mydata.errors,status=status.HTTP_400_BAD_REQUEST
         mynotes = Note.objects.filter(Q(allowed_users__contains=user.email) | Q(creator=user))
         mynotes = NoteContentSerializer(mynotes,many=True)
-        # mydata = NoteContentSerializer(mydata)
-        # if(mynotes.is_valid() and mydata.is_valid()):
-        # else:   return Response(mynotes.data,status=status.HTTP_400_BAD_REQUEST)
-        # mynotes = []
-        # print(mydata,myuser.data)
-        # for i in mydata:
-        #     for myemail in i.allowed_users.strip().split(','):
-        #         if myemail == myuser.data['email']:
-        #             mynotes.append(i)
         return Response({'token':token.key ,'your notes':mynotes.data},status=status.HTTP_200_OK)
     else:
-        return Response({'error':'invalid credentials'})
+        return Response({'error':'invalid credentials'},status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
 def registerapi(request):
@@ -48,10 +38,15 @@ def registerapi(request):
         return Response(myuser.errors,status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(['GET'])
-@permission_classes((IsAuthenticated,))
+@api_view(['POST'])
 def logoutapi(request):
-    logout(request)
+    token = request.data.get('token')
+    try:
+        token_obj = Token.objects.get(key=token)
+        token_obj.delete()  # Invalidate the token
+        return Response({'message': 'Successfully logged out'})
+    except Token.DoesNotExist:
+        return Response({'error': 'Invalid token'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 @api_view(['POST'])
@@ -59,30 +54,43 @@ def createnoteapi(request):
     token = request.data.get('token')
     token = Token.objects.get(key=token)
     user = token.user
+    if not user:    return Response(status=status.HTTP_401_UNAUTHORIZED)
     data = request.data.copy()
     data.pop('token',None)
-    # print(data)
     mydata = Note.objects.create(title=data['title'],creator=user,timestamp=datetime.now(),content=data['content'],allowed_users=data['allowed_users'])
     mydata.save()
-    # print(mydata.allowed_users)
     return Response(NoteSerializer(mydata).data , status=status.HTTP_201_CREATED)
 
 @api_view(['POST'])
 def deletenoteapi(request):
-    #delete a note by using its id
-    id = int(request.data.get('id'))
-    print(id,type(id))
-    if not id:
+    token = request.data.get('token')
+    user = Token.objects.get(key=token).user
+    id = int(request.data.get('id'))            #delete a note by using its id
+    if not id:  
         return Response({"Error":"Include the id properly for deleting the note"},status=status.HTTP_400_BAD_REQUEST)
     mynote = Note.objects.get(pk=id)
-    print(mynote)
-    if not mynote:
+    if not mynote:  
         return Response({"error":"Note does not exist"},status=status.HTTP_400_BAD_REQUEST)
+    if(mynote.creator!=user):
+        return Response({"Error":"You cannot delete this note ...you can only delete notes created by you!!"},status=status.HTTP_400_BAD_REQUEST)
     mynote.delete()
     return Response({"Note deleted successfully"},status=status.HTTP_200_OK)
 
 @api_view(['POST'])
-def updatenoteapi():
-
+def updatenoteapi(request):
+    token = request.data.get('token')
+    user = Token.objects.get(key=token).user
+    print(user,user.email)
+    if not user:
+        return Response({"Error":"Authentication required"},status=status.HTTP_401_UNAUTHORIZED)
+    data = request.data.copy()
+    data.pop('token',None)
+    mynote = Note.objects.get(pk=data.get('id'))
+    serializer = NoteSerializer(mynote,data=data,partial=True)
+    if(serializer.is_valid()):
+        serializer.save()
+        return Response(serializer.data,status=status.HTTP_200_OK)
+    else:
+        return Response({"Error":"Note data incorrect"},status=status.HTTP_400_BAD_REQUEST)
     pass
 

@@ -44,11 +44,13 @@ class NoteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Note
         fields = ('title','id','content','allowed_users')
-        # partial = True
-    # def create(self, validated_data):
-    #     # Assign current user automatically
-    #     validated_data['creator'] = self.context['request'].user  # Assuming authenticated request
-    #     return super().create(validated_data)
+    def update(self, instance, validated_data):
+      instance.title = validated_data.get('title', instance.title)  # Use existing value if not provided
+      instance.content = validated_data.get('content', instance.content)
+      instance.allowed_users =  validated_data.get('allowed_users', instance.allowed_users)
+      instance.save()
+      return instance
+
 
 class NoteContentSerializer(serializers.ModelSerializer):
     class Meta:
