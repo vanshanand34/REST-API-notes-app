@@ -9,6 +9,7 @@ urlpatterns = [
     path('createnoteapi',views.createnoteapi,name="createnoteapi"),
     path('updatenoteapi',views.updatenoteapi,name="createnoteapi"),
     path('deletenoteapi',views.deletenoteapi,name="createnoteapi"),
+    path('getnoteapi',views.getnoteapi,name='getnextnote')
     # path('myapi/',views.myloginapi,name='myapi'),
 
 ]

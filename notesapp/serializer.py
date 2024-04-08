@@ -11,6 +11,7 @@ from django.contrib.auth.password_validation import validate_password
 
 
 #Serializer to Register User
+#helps in easy resgistration
 class RegisterSerializer(serializers.ModelSerializer):
   email = serializers.EmailField(required=True,validators=[UniqueValidator(queryset=User.objects.all())])
   password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
@@ -34,12 +35,13 @@ class RegisterSerializer(serializers.ModelSerializer):
     user.save()
     return user
 
-
+#use to convert user objects into json type
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('id','email','username')
 
+#serailizer for note objects
 class NoteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Note
@@ -51,7 +53,8 @@ class NoteSerializer(serializers.ModelSerializer):
       instance.save()
       return instance
 
-
+#used to return a note to the user with data that is necessary for the user
+#not included the alowed users , timestamp fields as they are not of that much importance
 class NoteContentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Note

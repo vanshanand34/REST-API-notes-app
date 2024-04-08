@@ -1,4 +1,3 @@
-from django.shortcuts import render
 from django.db.models import Q
 from django.contrib.auth import login , logout , authenticate
 from django.contrib.auth.models import User
@@ -6,28 +5,44 @@ from datetime import datetime
 from .models import Note
 from .serializer import UserSerializer , NoteSerializer , NoteContentSerializer , RegisterSerializer
 from rest_framework.decorators import api_view , permission_classes 
-from functools import wraps
 from rest_framework.response import Response 
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.models import Token
+from django.core.paginator import Paginator , EmptyPage
 
 
-# Create your views here.
-@api_view(['POST'])
+#logs in user on the basis of username and password 
+#provide and returns all th3 notes created by user and notes in which user's email is mentioned in it's allowed_user field
+#also return token for future authorisation
+def getNotes(user,mypageno):
+    mynotes = Note.objects.filter(Q(allowed_users__contains=user.email) | Q(creator=user)).order_by('id')
+    try:
+        mypages = Paginator(mynotes,2)
+        page = mypages.page(mypageno)
+        mynotes = NoteContentSerializer(page.object_list,many=True)
+        return mynotes
+    except EmptyPage :
+        return Response({"Error":"Page does not exist"},status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET'])
 def loginapi(request):
-    username = request.data.get('username')
-    password = request.data.get('password')
+    username = request.GET.get('username')
+    password = request.GET.get('password')
     user = authenticate(request,username=username,password=password)
+    print(user)
     if user is not None:
         login(request,user)
         token , created = Token.objects.get_or_create(user=user)
-        mynotes = Note.objects.filter(Q(allowed_users__contains=user.email) | Q(creator=user))
-        mynotes = NoteContentSerializer(mynotes,many=True)
-        return Response({'token':token.key ,'your notes':mynotes.data},status=status.HTTP_200_OK)
+        mynotes = getNotes(request.user,1)
+        return Response({'token':token.key ,'your note':mynotes.data},status=status.HTTP_200_OK)
     else:
         return Response({'error':'invalid credentials'},status=status.HTTP_400_BAD_REQUEST)
 
+
+#registers new user with the help of RegisterSerialiser
+#Serialisers are special type of models that are used
 @api_view(['POST'])
 def registerapi(request):
     myuser = RegisterSerializer(data = request.data)
@@ -37,12 +52,34 @@ def registerapi(request):
     else:
         return Response(myuser.errors,status=status.HTTP_400_BAD_REQUEST)
 
+@api_view(['GET'])
+def getnoteapi(request):
+    token = request.GET.get('token')
+    pageno = int(request.GET.get('page'))
+    # print(pageno)
+    try:
+        myuser = Token.objects.get(key=token)
+        if(not myuser):
+            return Response({'error': 'Invalid token'}, status=status.HTTP_401_UNAUTHORIZED)
+        pages = getNotes(myuser.user,pageno)
+        # print(pages)
+        return Response({'notes': pages.data},status=status.HTTP_201_CREATED)
+    except Exception as e:
+        # print(e)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+        
+
+
 
 @api_view(['POST'])
 def logoutapi(request):
     token = request.data.get('token')
+    print(token)
     try:
+        print('tokens',Token.objects.all())
         token_obj = Token.objects.get(key=token)
+        
+        print(token_obj)
         token_obj.delete()  # Invalidate the token
         return Response({'message': 'Successfully logged out'})
     except Token.DoesNotExist:
@@ -80,7 +117,7 @@ def deletenoteapi(request):
 def updatenoteapi(request):
     token = request.data.get('token')
     user = Token.objects.get(key=token).user
-    print(user,user.email)
+    # print(user,user.email)
     if not user:
         return Response({"Error":"Authentication required"},status=status.HTTP_401_UNAUTHORIZED)
     data = request.data.copy()
@@ -92,5 +129,4 @@ def updatenoteapi(request):
         return Response(serializer.data,status=status.HTTP_200_OK)
     else:
         return Response({"Error":"Note data incorrect"},status=status.HTTP_400_BAD_REQUEST)
-    pass
 

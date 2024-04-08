@@ -1,15 +1,15 @@
 import requests
 
-#testing user authentication login and getting corresponding notes in response
+#testing user registeration and getting corresponding token in response
 login_url = "http://127.0.0.1:8000/notesapp/registerapi"
-credentials = {"username": "temp", "password": "temp_pass","password2":"temp_pass","email":"xyz@example.com","first_name":"temp","last_name":"name"}
+credentials = {"username": "temp3", "password": "temp_pass3","password2":"temp_pass3","email":"temp@example.com","first_name":"temp3","last_name":"name"}
 
 
 response = requests.post(login_url, data=credentials)
 
-# Check for successful login (adjust based on API response format)
+# Check for successful registeration 
 if response.status_code == 201:
     data = response.json()  # Assuming response is JSON
-    print(f"Login successful! Retrieved data: {data}")
+    print(f"Registeration successful! Retrieved data: {data}")
 else:
-    print(f"Login failed! Status code: {response.data}")
+    print(f"Registeration failed! Status code: {response.data}")
