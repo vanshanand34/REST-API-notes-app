@@ -56,7 +56,8 @@ def logoutapi(request):
 
 @api_view(['POST'])
 def createnoteapi(request):
-    c
+    token = request.data.get('token')
+    token = Token.objects.get(key=token)
     user = token.user
     data = request.data.copy()
     data.pop('token',None)
@@ -67,8 +68,18 @@ def createnoteapi(request):
     return Response(NoteSerializer(mydata).data , status=status.HTTP_201_CREATED)
 
 @api_view(['POST'])
-def deletenoteapi():
-    pass
+def deletenoteapi(request):
+    #delete a note by using its id
+    id = int(request.data.get('id'))
+    print(id,type(id))
+    if not id:
+        return Response({"Error":"Include the id properly for deleting the note"},status=status.HTTP_400_BAD_REQUEST)
+    mynote = Note.objects.get(pk=id)
+    print(mynote)
+    if not mynote:
+        return Response({"error":"Note does not exist"},status=status.HTTP_400_BAD_REQUEST)
+    mynote.delete()
+    return Response({"Note deleted successfully"},status=status.HTTP_200_OK)
 
 @api_view(['POST'])
 def updatenoteapi():

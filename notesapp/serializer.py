@@ -43,7 +43,7 @@ class UserSerializer(serializers.ModelSerializer):
 class NoteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Note
-        fields = ('title','content','allowed_users')
+        fields = ('title','id','content','allowed_users')
         # partial = True
     # def create(self, validated_data):
     #     # Assign current user automatically
