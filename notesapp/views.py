@@ -44,7 +44,7 @@ class NoteListView(generics.ListCreateAPIView):
 
 class NoteEdit(generics.RetrieveUpdateDestroyAPIView):
     
-    serializer_class = NoteSerializer
+    serializer_class = TempNoteSerializer
     permission_classes = [IsAuthenticated]
     authentication_classes = [TokenAuthentication]
     def get_queryset(self):
