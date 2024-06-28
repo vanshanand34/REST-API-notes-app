@@ -64,7 +64,7 @@ class Login(APIView):
     
 class Logout(APIView):
     def get(self,request):
-        if request.user.is_authenticated():
+        if request.user.is_authenticated:
             logout(request.user)
             token , _ = Token.objects.delete(user = request.user)
             return Response({"Logged out successfully!!!!1"})
